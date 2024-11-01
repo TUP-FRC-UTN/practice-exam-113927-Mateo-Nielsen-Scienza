@@ -17,6 +17,7 @@ import { Order } from '../models/orders';
 import { clienteValidaciones } from '../models/client';
 import { CommonModule } from '@angular/common';
 import { map, catchError } from 'rxjs';
+import { RouterModule } from '@angular/router';
 
 
 interface OrderHistory {
@@ -28,7 +29,7 @@ interface OrderHistory {
 @Component({
   selector: 'app-create-order',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
+  imports: [CommonModule, ReactiveFormsModule, HttpClientModule, RouterModule],
   templateUrl: './create-order.component.html',
   styleUrl: './create-order.component.css'
 })
@@ -36,6 +37,7 @@ export class CreateOrderComponent implements OnInit{
 
   orderForm!: FormGroup;
   products$: Observable<Product[]> = new Observable<Product[]>();
+  
   constructor(private fb: FormBuilder, private http: HttpClient) {
     this.initForm();
   }

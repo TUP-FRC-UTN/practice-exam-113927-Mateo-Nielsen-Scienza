@@ -1,50 +1,125 @@
-<nav class="bg-blue-500 text-white p-4">
+<nav class="bg-blue-500 text-white p-4 flex justify-between">
   <a routerLink="/orders" class="mr-4">Ver Pedidos</a>
+  <a routerLink="/create-order">Crear Pedido</a>
 </nav>
-<h1 class="text-2xl font-bold mb-6">Crear Pedido</h1>
 
-<form [formGroup]="orderForm" (ngSubmit)="onSubmit()" class="m-6 p-6">
-  <div formGroupName="customer">
-    <label for="nombre">Nombre:</label>
-    <input id="nombre" formControlName="nombre" class="form-control">
-    <div *ngIf="orderForm.get('customer.nombre')?.invalid && orderForm.get('customer.nombre')?.touched">
-      <small *ngIf="orderForm.get('customer.nombre')?.errors?.['required']">Nombre es requerido.</small>
-      <small *ngIf="orderForm.get('customer.nombre')?.errors?.['minlength']">Nombre debe tener al menos 3 caracteres.</small>
-    </div>
+<div class="min-h-screen bg-gray-50">
+  <div class="card m-6 p-6 bg-white rounded-lg shadow">
+    <h1 class="text-2xl font-bold mb-6">Crear Pedido</h1>
 
-    <label for="email">Email:</label>
-    <input id="email" formControlName="email" class="form-control">
-    <div *ngIf="orderForm.get('customer.email')?.invalid && orderForm.get('customer.email')?.touched">
-      <small *ngIf="orderForm.get('customer.email')?.errors?.['required']">Email es requerido.</small>
-      <small *ngIf="orderForm.get('customer.email')?.errors?.['email']">Formato de email no es válido.</small>
-    </div>
-  </div>
+    <form [formGroup]="orderForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <div formGroupName="customer" class="space-y-4">
+        <div class="form-group">
+          <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre:</label>
+          <input 
+            id="nombre" 
+            formControlName="nombre" 
+            class="form-control mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          >
+          <div *ngIf="orderForm.get('customer.nombre')?.invalid && orderForm.get('customer.nombre')?.touched"
+               class="mt-1 text-sm text-red-600">
+            <small *ngIf="orderForm.get('customer.nombre')?.errors?.['required']">Nombre es requerido.</small>
+            <small *ngIf="orderForm.get('customer.nombre')?.errors?.['minlength']">Nombre debe tener al menos 3 caracteres.</small>
+          </div>
+        </div>
 
-  <div formArrayName="products">
-    <div *ngFor="let product of products.controls; let i = index" [formGroupName]="i">
-      <label for="nombre">Producto:</label>
-      <select id="nombre" formControlName="nombre" class="form-control">
-        <option *ngFor="let product of products$ | async" [value]="product.name">{{ product.name }}</option>
-      </select>
-
-      <label for="cantidad">Cantidad:</label>
-      <input id="cantidad" type="number" formControlName="cantidad" class="form-control">
-      <div *ngIf="product.get('cantidad')?.invalid && product.get('cantidad')?.touched">
-        <small *ngIf="product.get('cantidad')?.errors?.['required']">Cantidad es requerida.</small>
-        <small *ngIf="product.get('cantidad')?.errors?.['min']">Cantidad debe ser mayor a 0.</small>
-        <small *ngIf="product.get('cantidad')?.errors?.['noExceedStock']">Cantidad no debe exceder el stock.</small>
+        <div class="form-group">
+          <label for="email" class="block text-sm font-medium text-gray-700">Email:</label>
+          <input 
+            id="email" 
+            formControlName="email" 
+            class="form-control mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          >
+          <div *ngIf="orderForm.get('customer.email')?.invalid && orderForm.get('customer.email')?.touched"
+               class="mt-1 text-sm text-red-600">
+            <small *ngIf="orderForm.get('customer.email')?.errors?.['required']">Email es requerido.</small>
+            <small *ngIf="orderForm.get('customer.email')?.errors?.['email']">Formato de email no es válido.</small>
+          </div>
+        </div>
       </div>
 
-      <label for="precio">Precio:</label>
-      <input id="precio" formControlName="precio" [disabled]="true" class="form-control">
+      <div formArrayName="products" class="space-y-6">
+        <div *ngFor="let product of products.controls; let i = index" 
+             [formGroupName]="i"
+             class="border p-4 rounded-lg space-y-4">
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold">Producto {{i + 1}}</h2>
+            <button type="button" 
+                    (click)="removeProduct(i)" 
+                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+              Eliminar Producto
+            </button>
+          </div>
 
-      <label for="stock">Stock:</label>
-      <input id="stock" formControlName="stock" [disabled]="true" class="form-control">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+              <label for="product-{{i}}" class="block text-sm font-medium text-gray-700">Producto:</label>
+              <select 
+                id="product-{{i}}" 
+                formControlName="nombre" 
+                class="form-control mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                <option value="">Seleccione un producto</option>
+                <option *ngFor="let product of products$ | async" 
+                        [value]="product.name">
+                  {{product.name}}
+                </option>
+              </select>
+            </div>
 
-      <button type="button" (click)="removeProduct(i)" class="bg-red-500 text-white px-4 py-2 rounded">Eliminar Producto</button>
-    </div>
+            <div class="form-group">
+              <label for="cantidad-{{i}}" class="block text-sm font-medium text-gray-700">Cantidad:</label>
+              <input 
+                id="cantidad-{{i}}" 
+                type="number" 
+                formControlName="cantidad" 
+                class="form-control mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              >
+              <div *ngIf="product.get('cantidad')?.invalid && product.get('cantidad')?.touched"
+                   class="mt-1 text-sm text-red-600">
+                <small *ngIf="product.get('cantidad')?.errors?.['required']">Cantidad es requerida.</small>
+                <small *ngIf="product.get('cantidad')?.errors?.['min']">Cantidad debe ser mayor a 0.</small>
+                <small *ngIf="product.get('cantidad')?.errors?.['noExceedStock']">Cantidad no debe exceder el stock.</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="precio-{{i}}" class="block text-sm font-medium text-gray-700">Precio:</label>
+              <input 
+                id="precio-{{i}}" 
+                formControlName="precio" 
+                [disabled]="true" 
+                class="form-control mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="stock-{{i}}" class="block text-sm font-medium text-gray-700">Stock:</label>
+              <input 
+                id="stock-{{i}}" 
+                formControlName="stock" 
+                [disabled]="true" 
+                class="form-control mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50"
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center pt-4">
+          <button 
+            type="button" 
+            (click)="addProduct()" 
+            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+            Agregar Producto
+          </button>
+
+          <button 
+            type="submit" 
+            [disabled]="orderForm.invalid" 
+            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50">
+            Crear Pedido
+          </button>
+        </div>
+      </div>
+    </form>
   </div>
-
-  <button type="button" (click)="addProduct()" class="bg-green-500 text-white px-4 py-2 rounded">Agregar Producto</button>
-  <button type="submit" [disabled]="orderForm.invalid" class="bg-blue-500 text-white px-4 py-2 rounded">Crear Pedido</button>
-</form>
+</div>

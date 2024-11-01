@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable, map } from 'rxjs';
@@ -9,7 +9,7 @@ import { OrderProcessingService } from '../order-processing.service';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe, CurrencyPipe],
+  imports: [CommonModule, FormsModule, RouterLink, DatePipe, CurrencyPipe, HttpClientModule],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css',
   providers: [OrderProcessingService] 
@@ -44,6 +44,8 @@ export class OrdersComponent implements OnInit{
       console.error(error);
     }
   }
+
+  
 
   ngOnInit(): void {
     this.loadOrders();
