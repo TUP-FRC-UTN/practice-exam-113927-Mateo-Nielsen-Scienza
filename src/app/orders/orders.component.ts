@@ -1,16 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Observable, map } from 'rxjs';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
+import { Observable, catchError, of } from 'rxjs';
 import { Order } from '../models/orders';
 import { RouterLink } from '@angular/router';
 import { OrderProcessingService } from '../order-processing.service';
 import { OrderProduct } from '../models/orders';
+import { Product } from '../models/products';
+
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe, CurrencyPipe, HttpClientModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, DatePipe, CurrencyPipe, HttpClientModule],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css',
   providers: [OrderProcessingService] 
@@ -21,48 +23,38 @@ export class OrdersComponent implements OnInit{
   private orders: Order[] = [];
   filteredOrders$!: Observable<Order[]>;
   searchTerm: string = '';
-  private apiUrl = 'http://localhost:3000'; 
+  private apiUrl = 'http://localhost:3000';
+  products$: Observable<Product[]>;
 
   constructor(
     private http: HttpClient,
     private orderProcessing: OrderProcessingService
-  ) {}
-
-  async submitOrder(orderData: any): Promise<void> {
-    try {
-      const processedOrder = await this.orderProcessing.processOrder({
-        customerName: orderData.customer.nombre,
-        email: orderData.customer.email,
-        products: orderData.products,
-        total: orderData.products.reduce((sum: number, p: OrderProduct) => sum + (p.price * p.quantity), 0),
-        orderCode: `ORD-${Date.now()}`,
-        timestamp: new Date().toISOString()
-      });
-
-      await this.http.post(`${this.apiUrl}/orders`, processedOrder).toPromise();
-      this.loadOrders(); 
-    } catch (error) {
-      console.error('Error submitting order:', error);
-    }
+  ) {
+    this.products$ = this.http.get<Product[]>(`${this.apiUrl}/products`).pipe(
+      catchError(() => of([
+        { id: "1", name: "Laptop Gaming Pro", price: 999.99, stock: 50 },
+        { id: "2", name: "Smartphone X12", price: 699.99, stock: 100 },
+        { id: "3", name: "Tablet Air", price: 449.99, stock: 75 },
+        { id: "4", name: "Smart Watch V4", price: 199.99, stock: 120 }
+      ]))
+    );
   }
-
-  
 
   ngOnInit(): void {
     this.loadOrders();
   }
 
- 
   private loadOrders(): void {
     this.loading = true;
-    this.http.get<Order[]>(`${this.apiUrl}/orders`).subscribe({
+    this.http.get<Order[]>(`${this.apiUrl}/orders`).pipe(
+      catchError(error => {
+        console.error('Error loading orders:', error);
+        return of([]);
+      })
+    ).subscribe({
       next: (orders) => {
         this.orders = orders;
         this.filterOrders();
-      },
-      error: (error) => {
-        console.error('Error loading orders:', error);
-        this.loading = false;
       },
       complete: () => this.loading = false
     });
@@ -78,5 +70,8 @@ export class OrdersComponent implements OnInit{
       observer.complete();
     });
   }
-
+  
 }
+
+
+

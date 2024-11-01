@@ -34,54 +34,32 @@ interface OrderHistory {
   styleUrl: './create-order.component.css'
 })
 export class CreateOrderComponent implements OnInit{
-
   orderForm!: FormGroup;
-  products$: Observable<Product[]> = new Observable<Product[]>();
-  
+  products$: Observable<Product[]>;
+  private apiUrl = 'http://localhost:3000';
+
   constructor(private fb: FormBuilder, private http: HttpClient) {
     this.initForm();
+    this.products$ = this.http.get<Product[]>(`${this.apiUrl}/products`).pipe(
+      catchError(() => of([
+        { id: "1", name: "Laptop Gaming Pro", price: 999.99, stock: 50 },
+        { id: "2", name: "Smartphone X12", price: 699.99, stock: 100 },
+        { id: "3", name: "Tablet Air", price: 449.99, stock: 75 },
+        { id: "4", name: "Smart Watch V4", price: 199.99, stock: 120 }
+      ]))
+    );
   }
 
-  ngOnInit(): void {
-    this.products$ = this.http.get<Product[]>('/api/products');
-  }
-
+  ngOnInit(): void {}
 
   private initForm(): void {
     this.orderForm = this.fb.group({
       customer: this.fb.group({
-        nombre: ['', [Validators.required, Validators.minLength(clienteValidaciones.nombre.minLength)]],
+        nombre: ['', [Validators.required, Validators.minLength(3)]],
         email: ['', [Validators.required, Validators.email], [this.emailOrderLimitValidator()]]
       }),
-      products: this.fb.array([], [
-        Validators.required,
-        this.minProductsValidator(),
-        this.maxTotalQuantityValidator(),
-        this.noDuplicateProductsValidator()
-      ])
+      products: this.fb.array([])
     });
-  }
-
-  emailOrderLimitValidator(): AsyncValidatorFn {
-    return (control: AbstractControl): Observable<ValidationErrors | null> => {
-      const email = control.value;
-      
-      if (!email) {
-        return of(null);
-      }
-
-      return this.http.get<OrderHistory[]>(`/orders?email=${email}`).pipe(
-        map((orders: OrderHistory[]) => {
-          const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
-          const recentOrders = orders.filter((order: OrderHistory) => 
-            new Date(order.timestamp) > last24Hours
-          );
-
-          return recentOrders.length > 3 ? { orderLimit: true } : null;
-        }),
-        catchError(() => of(null))
-      );
-    };
   }
 
   get products(): FormArray {
@@ -90,95 +68,62 @@ export class CreateOrderComponent implements OnInit{
 
   addProduct(): void {
     const productGroup = this.fb.group({
-      nombre: ['', Validators.required],  
-      cantidad: [1, [Validators.required, Validators.min(1), this.noExceedStockValidator()]],
+      nombre: ['', Validators.required],
+      cantidad: [1, [Validators.required, Validators.min(1)]],
       precio: [{ value: 0, disabled: true }],
       stock: [{ value: 0, disabled: true }]
     });
-  
-    this.products.push(productGroup);
-  }
-  private calculateTotal(products: any[]): number {
-    return products.reduce((total, product) => {
-      return total + (product.cantidad * product.precio);
-    }, 0);
-  }
 
-  private generateOrderCode(email: string): string {
-    const prefix = email.charAt(0).toUpperCase();
-    const timestamp = Date.now();
-    return `${prefix}.com${timestamp}`;
-  }
- 
-  private mapFormToOrder(formValue: any): Order {
-    return {
-      customerName: formValue.customer.nombre,
-      email: formValue.customer.email,
-      products: formValue.products.map((p: any) => ({
-        productId: p.nombre, 
-        quantity: p.cantidad,
-        price: p.precio,
-        stock: p.stock
-      })),
-      total: this.calculateTotal(formValue.products),
-      orderCode: this.generateOrderCode(formValue.customer.email),
-      timestamp: new Date().toISOString()
-    };
+    productGroup.get('nombre')?.valueChanges.subscribe(selectedProduct => {
+      this.products$.subscribe(products => {
+        const product = products.find(p => p.name === selectedProduct);
+        if (product) {
+          productGroup.patchValue({
+            precio: product.price,
+            stock: product.stock
+          }, { emitEvent: false });
+
+          const cantidadControl = productGroup.get('cantidad');
+          cantidadControl?.setValidators([
+            Validators.required,
+            Validators.min(1),
+            Validators.max(product.stock)
+          ]);
+          cantidadControl?.updateValueAndValidity();
+        }
+      });
+    });
+
+    this.products.push(productGroup);
   }
 
   removeProduct(index: number): void {
     this.products.removeAt(index);
   }
 
-  noExceedStockValidator() {
-    return (control: AbstractControl) => {
-      const stock = control.parent?.get('stock')?.value;
-      if (control.value > stock) {
-        return { noExceedStock: true };
+  emailOrderLimitValidator(): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      const email = control.value;
+      if (!email) {
+        return of(null);
       }
-      return null;
-    };
-  }
-
-  minProductsValidator() {
-    return (control: AbstractControl) => {
-      const products = control as FormArray;
-      if (products.length < 1) {
-        return { minProducts: true };
-      }
-      return null;
-    };
-  }
-
-  
-
-  maxTotalQuantityValidator() {
-    return (control: AbstractControl) => {
-      const products = control as FormArray;
-      const totalQuantity = products.controls.reduce((sum, product) => sum + product.get('cantidad')?.value || 0, 0);
-      if (totalQuantity > 10) {
-        return { maxTotalQuantity: true };
-      }
-      return null;
+      return this.http.get<OrderHistory[]>(`${this.apiUrl}/orders?email=${email}`).pipe(
+        map(orders => {
+          const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          const recentOrders = orders.filter(order => 
+            new Date(order.timestamp) > last24Hours
+          );
+          return recentOrders.length >= 3 ? { orderLimit: true } : null;
+        }),
+        catchError(() => of(null))
+      );
     };
   }
 
   onSubmit(): void {
     if (this.orderForm.valid) {
       console.log(this.orderForm.value);
+      
     }
-  }
-
-  noDuplicateProductsValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const products = control as FormArray;
-      const productNames = products.controls.map(product => product.get('nombre')?.value);
-      
-      const hasDuplicates = productNames.some((name, index) => 
-        productNames.indexOf(name) !== index && name !== ''
-      );
-      
-      return hasDuplicates ? { duplicateProducts: true } : null;
-    };
   }
 }
