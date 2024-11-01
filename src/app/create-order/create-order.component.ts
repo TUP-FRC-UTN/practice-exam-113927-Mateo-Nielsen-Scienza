@@ -158,7 +158,7 @@ export class CreateOrderComponent implements OnInit{
           alert('Pedido creado exitosamente');
           this.router.navigate(['/orders'])
             .then(() => {
-              // Force orders component to reload
+           
               window.location.reload();
             });
         },
