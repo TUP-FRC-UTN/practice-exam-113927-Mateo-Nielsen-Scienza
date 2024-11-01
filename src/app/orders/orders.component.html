@@ -1,57 +1,52 @@
+<div class="container mt-4 min-h-screen bg-gray-50">
+  <nav class="bg-blue-500 text-white p-4 mb-4">
+    <a routerLink="/create-order" class="btn btn-primary">Crear Pedido</a>
+  </nav>
 
-<div class="container mt-4">
-   
-    <nav class="mb-4">
-      <a routerLink="/create-order" class="btn btn-primary">Crear Pedido</a>
-    </nav>
-  
-   
-    <div class="row mb-4">
-      <div class="col">
-        <input 
-          type="text" 
-          class="form-control" 
-          placeholder="Buscar por cliente o email..."
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="filterOrders()"
-        >
-      </div>
-    </div>
-  
- 
-    <div *ngIf="loading" class="text-center">
-      <div class="spinner-border" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-    </div>
-  
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Cliente</th>
-            <th>Email</th>
-            <th>Productos</th>
-            <th>Fecha</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let order of filteredOrders$ | async">
-            <td>{{ order.orderCode }}</td>
-            <td>{{ order.customerName }}</td>
-            <td>{{ order.email }}</td>
-            <td>{{ order.products.length }}</td>
-            <td>{{ order.timestamp | date:'short' }}</td>
-            <td>{{ order.total | currency }}</td>
-          </tr>
-        </tbody>
-      </table>
-  
-    
-      <div *ngIf="(filteredOrders$ | async)?.length === 0" class="text-center p-4">
-        <p class="text-muted">No se encontraron pedidos</p>
-      </div>
+  <div class="row mb-4">
+    <div class="col">
+      <input 
+        type="text" 
+        class="form-control" 
+        placeholder="Buscar por cliente o email..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="filterOrders()"
+      >
     </div>
   </div>
+
+  <div *ngIf="loading" class="text-center">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Cliente</th>
+          <th>Email</th>
+          <th>Productos</th>
+          <th>Fecha</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of filteredOrders$ | async">
+          <td>{{ order.orderCode }}</td>
+          <td>{{ order.customerName }}</td>
+          <td>{{ order.email }}</td>
+          <td>{{ order.products.length }}</td>
+          <td>{{ order.timestamp | date:'short' }}</td>
+          <td>{{ order.total | currency }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="(filteredOrders$ | async)?.length === 0" class="text-center p-4">
+      <p class="text-muted">No se encontraron pedidos</p>
+    </div>
+  </div>
+</div>
