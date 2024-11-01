@@ -29,7 +29,11 @@ export class CreateOrderComponent implements OnInit{
   products$: Observable<Product[]>;
   private apiUrl = 'http://localhost:3000';
 
-  constructor(private fb: FormBuilder, private http: HttpClient) {
+  constructor(
+    private fb: FormBuilder, 
+    private http: HttpClient,
+    private router: Router 
+  ) {
     this.initForm();
     this.products$ = this.http.get<Product[]>(`${this.apiUrl}/products`).pipe(
       catchError(() => of([
@@ -111,10 +115,58 @@ export class CreateOrderComponent implements OnInit{
     };
   }
 
+  private calculateTotal(products: any[]): number {
+    return products.reduce((total, product) => {
+      const precio = product.precio || 0;
+      const cantidad = product.cantidad || 0;
+      return total + (precio * cantidad);
+    }, 0);
+  }
+
+  private getProductId(productName: string): string {
+    let id = '';
+    this.products$.subscribe(products => {
+      const product = products.find(p => p.name === productName);
+      if (product) {
+        id = product.id;
+      }
+    }).unsubscribe();
+    return id;
+  }
+
   onSubmit(): void {
     if (this.orderForm.valid) {
-      console.log(this.orderForm.value);
+      const formValue = this.orderForm.value;
       
+      const orderData = {
+        id: Date.now().toString(),
+        customerName: formValue.customer.nombre,
+        email: formValue.customer.email,
+        products: formValue.products.map((p: any) => ({
+          productId: this.getProductId(p.nombre),
+          quantity: p.cantidad,
+          price: p.precio,
+          stock: p.stock
+        })),
+        total: this.calculateTotal(this.products.getRawValue()),
+        orderCode: `ORD-${Date.now()}`,
+        timestamp: new Date().toISOString()
+      };
+  
+      this.http.post(`${this.apiUrl}/orders`, orderData).subscribe({
+        next: () => {
+          alert('Pedido creado exitosamente');
+          this.router.navigate(['/orders'])
+            .then(() => {
+              // Force orders component to reload
+              window.location.reload();
+            });
+        },
+        error: (error) => {
+          console.error('Error al crear pedido:', error);
+          alert('Error al crear el pedido');
+        }
+      });
     }
   }
 }
