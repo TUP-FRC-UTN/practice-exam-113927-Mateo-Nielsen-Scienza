@@ -1,0 +1,50 @@
+<nav>
+    <a routerLink="/orders">Ver Pedidos</a>
+  </nav>
+  <h1>Crear Pedido</h1>
+  
+  <form [formGroup]="orderForm" (ngSubmit)="onSubmit()">
+    <div formGroupName="customer">
+      <label for="nombre">Nombre:</label>
+      <input id="nombre" formControlName="nombre">
+      <div *ngIf="orderForm.get('customer.nombre')?.invalid && orderForm.get('customer.nombre')?.touched">
+        <small *ngIf="orderForm.get('customer.nombre')?.errors?.['required']">Nombre es requerido.</small>
+        <small *ngIf="orderForm.get('customer.nombre')?.errors?.['minlength']">Nombre debe tener al menos 3 caracteres.</small>
+      </div>
+  
+      <label for="email">Email:</label>
+      <input id="email" formControlName="email">
+      <div *ngIf="orderForm.get('customer.email')?.invalid && orderForm.get('customer.email')?.touched">
+        <small *ngIf="orderForm.get('customer.email')?.errors?.['required']">Email es requerido.</small>
+        <small *ngIf="orderForm.get('customer.email')?.errors?.['email']">Formato de email no es válido.</small>
+      </div>
+    </div>
+  
+    <div formArrayName="products">
+        <div *ngFor="let product of products.controls; let i = index" [formGroupName]="i">
+          <label for="nombre">Producto:</label>
+          <select id="nombre" formControlName="nombre">
+            <option *ngFor="let product of products$ | async" [value]="product.name">{{ product.name }}</option>
+          </select>
+          
+          <label for="cantidad">Cantidad:</label>
+          <input id="cantidad" type="number" formControlName="cantidad">
+          <div *ngIf="product.get('cantidad')?.invalid && product.get('cantidad')?.touched">
+            <small *ngIf="product.get('cantidad')?.errors?.['required']">Cantidad es requerida.</small>
+            <small *ngIf="product.get('cantidad')?.errors?.['min']">Cantidad debe ser mayor a 0.</small>
+            <small *ngIf="product.get('cantidad')?.errors?.['noExceedStock']">Cantidad no debe exceder el stock.</small>
+          </div>
+      
+          <label for="precio">Precio:</label>
+          <input id="precio" formControlName="precio" [disabled]="true">
+      
+          <label for="stock">Stock:</label>
+          <input id="stock" formControlName="stock" [disabled]="true">
+      
+          <button type="button" (click)="removeProduct(i)">Eliminar Producto</button>
+        </div>
+      </div>
+      
+      <button type="button" (click)="addProduct()">Agregar Producto</button>
+      <button type="submit" [disabled]="orderForm.invalid">Crear Pedido</button>
+  </form>
