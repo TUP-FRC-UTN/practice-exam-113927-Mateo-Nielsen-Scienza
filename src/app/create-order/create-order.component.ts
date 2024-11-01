@@ -1,15 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { 
-  FormBuilder, 
-  FormGroup, 
-  FormArray, 
-  Validators, 
-  AbstractControl, 
-  ValidatorFn, 
-  ValidationErrors, 
-  ReactiveFormsModule,
-  AsyncValidatorFn,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidatorFn, ValidationErrors, ReactiveFormsModule,AsyncValidatorFn,} from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { Product } from '../models/products';
@@ -18,6 +8,7 @@ import { clienteValidaciones } from '../models/client';
 import { CommonModule } from '@angular/common';
 import { map, catchError } from 'rxjs';
 import { RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 
 
 interface OrderHistory {
