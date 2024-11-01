@@ -6,6 +6,7 @@ import { Observable, map } from 'rxjs';
 import { Order } from '../models/orders';
 import { RouterLink } from '@angular/router';
 import { OrderProcessingService } from '../order-processing.service';
+import { OrderProduct } from '../models/orders';
 @Component({
   selector: 'app-orders',
   standalone: true,
@@ -20,6 +21,7 @@ export class OrdersComponent implements OnInit{
   private orders: Order[] = [];
   filteredOrders$!: Observable<Order[]>;
   searchTerm: string = '';
+  private apiUrl = 'http://localhost:3000'; 
 
   constructor(
     private http: HttpClient,
@@ -32,16 +34,15 @@ export class OrdersComponent implements OnInit{
         customerName: orderData.customer.nombre,
         email: orderData.customer.email,
         products: orderData.products,
-        total: 0, 
-        orderCode: '', 
-        timestamp: '' 
+        total: orderData.products.reduce((sum: number, p: OrderProduct) => sum + (p.price * p.quantity), 0),
+        orderCode: `ORD-${Date.now()}`,
+        timestamp: new Date().toISOString()
       });
 
-      await this.http.post('/api/orders', processedOrder).toPromise();
-     
+      await this.http.post(`${this.apiUrl}/orders`, processedOrder).toPromise();
+      this.loadOrders(); 
     } catch (error) {
-      
-      console.error(error);
+      console.error('Error submitting order:', error);
     }
   }
 
@@ -51,14 +52,18 @@ export class OrdersComponent implements OnInit{
     this.loadOrders();
   }
 
+ 
   private loadOrders(): void {
     this.loading = true;
-    this.http.get<Order[]>('/api/orders').subscribe({
+    this.http.get<Order[]>(`${this.apiUrl}/orders`).subscribe({
       next: (orders) => {
         this.orders = orders;
         this.filterOrders();
       },
-      error: (error) => console.error('Error loading orders:', error),
+      error: (error) => {
+        console.error('Error loading orders:', error);
+        this.loading = false;
+      },
       complete: () => this.loading = false
     });
   }
@@ -73,4 +78,5 @@ export class OrdersComponent implements OnInit{
       observer.complete();
     });
   }
+
 }
